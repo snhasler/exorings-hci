@@ -82,14 +82,7 @@ For each orbital epoch, the script:
 
 Orbital and ring geometry module.
 
-Provides functions for:
-
-- Orbital coordinate generation
-- Coordinate transformations
-- Rotation matrices
-- Angular momentum vectors
-- Ring orientation calculations
-- Observer and star viewing geometry
+Provides functions for: (1) Orbital coordinate generation, (2) coordinate transformations, (3) rotation matrices, (4) angular momentum vectors, (5) ring orientation calculations, (6) observer and star viewing geometry
 
 This module defines the geometric framework used throughout the simulations.
 
@@ -98,25 +91,14 @@ This module defines the geometric framework used throughout the simulations.
 
 Contains ray-intersection methods used to determine illumination and shadowing.
 
-Provides functions for determining: 
-
-- Planet self-shadowing
-- Planet shadowing of the rings
-- Ring shadowing of the planet
-- Ring occulatations
+Provides functions for determining: (1) planet self-shadowing, (2) planet shadowing of the rings, (3) ring shadowing of the planet, (4) ring occulatations (of the planet)
 
 
 ### `utils.py`
 
 Collection of useful functions used throughout.
 
-Examples include:
-
-- Reading Roman filter transmission curves
-- Reading stellar spectra
-- Loading albedo spectra
-- Bandpass integration
-- Flux conversions
+Examples include: (1) Reading Roman filter transmission curves, (2) Reading stellar spectra, (3) Loading albedo spectra, (4) Bandpass integration, (5) Flux conversions
 
 ---
 
