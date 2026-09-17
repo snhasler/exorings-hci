@@ -4,29 +4,25 @@ A forward model for simulating the illumination, shadowing, and reflected-light 
 
 ## Overview
 
-<table style="border: none;">
-  <tr style="border: none;">
-    <td valign="top" style="border: none;">
-      <p><code>exorings</code> is a Python-based modeling framework designed to investigate the observable signatures of planetary rings in directly imaged exoplanet systems. The code computes the illumination state of a ringed planet throughout its orbit while accounting for:</p>
-      <ul>
-        <li>Planet illumination by the host star</li>
-        <li>Ring illumination by the host star</li>
-        <li>Mutual shadowing between the planet and rings</li>
-        <li>Observer visibility of illuminated regions</li>
-        <li>Orbital geometry</li>
-        <li>Ring orientation and obliquity</li>
-        <li>Wavelength-dependent reflected-light spectra</li>
-        <li>Instrument bandpasses (currently: Roman Coronagraph filters)</li>
-      </ul>
-      <p>The code produces broadband and spectrally resolved planet-star flux ratios as a function of orbital phase.</p>
-    </td>
-    <td valign="top" style="border: none;">
-      <img src="docs/images/ringed_planet.gif"
-           alt="Animation of the ringed-exoplanet illumination simulation"
-           width="350">
-    </td>
-  </tr>
-</table>
+<img src="docs/images/ringed_planet.gif"
+     alt="Animation of the ringed-exoplanet illumination simulation"
+     align="right"
+     width="300">
+
+`exorings` is a Python-based modeling framework designed to investigate the observable signatures of planetary rings in directly imaged exoplanet systems. The code computes the illumination state of a ringed planet throughout its orbit while accounting for:
+
+- Planet illumination by the host star
+- Ring illumination by the host star
+- Mutual shadowing between the planet and rings
+- Observer visibility of illuminated regions
+- Orbital geometry
+- Ring orientation and obliquity
+- Wavelength-dependent reflected-light spectra
+- Instrument bandpasses (currently: Roman Coronagraph filters)
+
+The code produces broadband and spectrally resolved planet-star flux ratios as a function of orbital phase.
+
+<br clear="right">
 
 
 ## Installation
