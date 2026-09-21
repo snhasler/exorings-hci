@@ -28,15 +28,15 @@ class SimulationParams:
         # Orbit parameters
         a_planet_au: float = 5.2,           # true planet separation (AU)
         e: float = 0.0,                     # eccentricity
-        inc_deg: float = 60.0,              # orbit inclination (deg)
+        inc_deg: float = 90.0,              # orbit inclination (deg)
         Omega_deg: float = 0.0,             # longitude of ascending node (deg)
         omega_deg: float = 170.0,           # argument of periastron (deg)
-        n_epochs: int = 18,                 # number of orbital positions to sample -- 250 generally good for phase curves
+        n_epochs: int = 250,                 # number of orbital positions to sample -- 250 generally good for phase curves
         # Planet & rings
         planet_radius_km: float = 69911.0,  # Jupiter radius [km]
         ring_inner: float = 1.43,           # inner ring radius [R_planet]
-        ring_outer: float = 3.52,           # outer ring radius [R_planet]
-        obliquity_deg: float = 90,        # ring obliquity (epsilon, deg) (for i=90°, face-on =)
+        ring_outer: float = 2.47,           # outer ring radius [R_planet]
+        obliquity_deg: float = 26.73,        # ring obliquity (epsilon, deg) (for i=90°, face-on =)
         spin_longitude_deg: float = -90.0,    # planet spin longitude (phi_s, deg)
         # Observer
         distance_pc: float = 10.0,          # observer distance (pc)
@@ -48,11 +48,11 @@ class SimulationParams:
         # What to run
         plot: bool = False,                 # combined 3D plot of all epochs
         plot_closeup: bool = False,          # close-up view of ringed planet per epoch
-        save_files: bool = False,           # write illumination-fraction .txt files
+        save_files: bool = True,           # write illumination-fraction .txt files
         save_figs: bool = False,             # save figures 
         # Output locations (only used if save_files / save_figs = True)
-        output_dir: str = ("/Users/shasler/Documents/Research/Projects/exorings/fraction_lit_output/2xSat_faceon_ring/"),
-        plot_dir: str = "/Users/shasler/Documents/Research/Projects/exorings/fraction_lit_output/2xSat_faceon_ring/plots/"
+        output_dir: str = ("/Users/shasler/Documents/Research/Projects/exorings/fraction_lit_output/1xSat_i90_obl26.73/"),
+        plot_dir: str = "/Users/shasler/Documents/Research/Projects/exorings/fraction_lit_output/1xSat_i90_obl26.73/plots/"
         ):
         
         self.a_planet_au = a_planet_au
@@ -447,7 +447,8 @@ def output_filenames(cfg: SimulationParams, geom: DerivedGeometry, timestamp: st
     return out_dir / f"planet_illumination_{file_stem}", out_dir / f"ring_illumination_{file_stem}"
 
 
-def write_header(cfg: SimulationParams, geom: DerivedGeometry, f_planet_illum: Path, f_ring_illum: Path):
+def write_header(cfg: SimulationParams, geom: DerivedGeometry, ring_tilt_rad: float,
+                 f_planet_illum: Path, f_ring_illum: Path):
     header = (
         "# Ringed planet illumination simulation\n"
         f"# Semi-major axis (km): {geom.a}\n"
@@ -459,6 +460,7 @@ def write_header(cfg: SimulationParams, geom: DerivedGeometry, f_planet_illum: P
         f"# Ring inner radius (km): {geom.ring_inner}\n"
         f"# Ring outer radius (km): {geom.ring_outer}\n"
         f"# Ring obliquity (deg): {cfg.obliquity_deg:.2f}\n"
+        f"# Ring tilt to LOS (rad): {ring_tilt_rad:.4f}\n"
         f"# Number of epochs saved (i.e., number of samples around the orbit): {cfg.n_epochs}\n\n"
     )
     with open(f_planet_illum, "w") as f_planet, open(f_ring_illum, "w") as f_ring:
@@ -499,14 +501,16 @@ def run_simulation(cfg: SimulationParams = None) -> SimulationResults:
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     f_planet_illum, f_ring_illum = output_filenames(cfg, geom, timestamp)
-    if cfg.save_files:
-        write_header(cfg, geom, f_planet_illum, f_ring_illum)
 
     star_position = np.array([0.0, 0.0, 0.0])     # Star at origin
     observer_dir = np.array([0.0, 0.0, -geom.d])  # observer in -z-direction
     observer_dir /= np.linalg.norm(observer_dir)
 
     orbit_coords, v1, v2, h_hat = get_orbit_frame(geom)
+
+    if cfg.save_files:
+        ring_tilt = ring_tilt_to_los(geom, v1, v2, h_hat, observer_dir)
+        write_header(cfg, geom, ring_tilt, f_planet_illum, f_ring_illum)
 
     # Initialize the 3D fig
     fig1, ax = (init_3d_plot(orbit_coords) if cfg.plot else (None, None))
