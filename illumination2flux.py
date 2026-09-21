@@ -82,6 +82,7 @@ class RunConfig:
     # Orbital & ring geometry
     inc:       float        # Orbital inclination to the line of sight (deg)
     obliq:     float        # Ring obliquity (deg)
+    ring_tilt: float        # Ring tilt to the line of sight (rad; from file header)
     ecc:       float        # Orbital eccentricity
     ring_size: float        # Ring size used in filename (km)
     epochs:    int          # Number of orbital epochs simulated
@@ -240,6 +241,7 @@ def build_configs_from_dir(
             ring_illum_file=ring_files[key].name,
             inc=inc,
             obliq=obliq if obliq is not None else file_obliq,
+            ring_tilt=utils.read_ring_tilt(ring_files[key]),
             ecc=ecc,
             ring_size=ring_size,
             epochs=epochs,
@@ -400,7 +402,7 @@ def convert_ring_spectra_to_flux(spectra_dict, wavelength_angstrom,
             separation=SEPARATION.to(u.km),
             R_inner=cfg.rinner,                          
             R_outer=cfg.router,                          
-            inc_rad=np.radians(cfg.obliq),
+            ringinc_rad=np.radians(cfg.ring_tilt),
         )
         flux_dict[phase] = flux
         fpfs_dict[phase] = fpfs
