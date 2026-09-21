@@ -290,7 +290,7 @@ def phase_angle(I, theta):
     '''
     return np.arccos( np.sin(I) * np.sin(theta) )
 
-def read_illumination_file(file_path, rows_to_skip=13):
+def read_illumination_file(file_path, rows_to_skip=14):
     """
     Read ringed_planet_illumination.py output file with headers for phase, true anomaly, 
     and fraction of planet/ring illuminated.
