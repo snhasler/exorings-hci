@@ -28,15 +28,15 @@ class SimulationParams:
         # Orbit parameters
         a_planet_au: float = 5.2,           # true planet separation (AU)
         e: float = 0.0,                     # eccentricity
-        inc_deg: float = 90.0,              # orbit inclination (deg)
+        inc_deg: float = 60.0,              # orbit inclination (deg)
         Omega_deg: float = 0.0,             # longitude of ascending node (deg)
         omega_deg: float = 170.0,           # argument of periastron (deg)
-        n_epochs: int = 250,                 # number of orbital positions to sample -- 250 generally good for phase curves
+        n_epochs: int = 18,                 # number of orbital positions to sample -- 250 generally good for phase curves
         # Planet & rings
         planet_radius_km: float = 69911.0,  # Jupiter radius [km]
         ring_inner: float = 1.43,           # inner ring radius [R_planet]
-        ring_outer: float = 2.47,           # outer ring radius [R_planet]
-        obliquity_deg: float = 26.73,        # ring obliquity (epsilon, deg)
+        ring_outer: float = 3.52,           # outer ring radius [R_planet]
+        obliquity_deg: float = 90,        # ring obliquity (epsilon, deg) (for i=90°, face-on =)
         spin_longitude_deg: float = -90.0,    # planet spin longitude (phi_s, deg)
         # Observer
         distance_pc: float = 10.0,          # observer distance (pc)
@@ -48,11 +48,11 @@ class SimulationParams:
         # What to run
         plot: bool = False,                 # combined 3D plot of all epochs
         plot_closeup: bool = False,          # close-up view of ringed planet per epoch
-        save_files: bool = True,           # write illumination-fraction .txt files
+        save_files: bool = False,           # write illumination-fraction .txt files
         save_figs: bool = False,             # save figures 
         # Output locations (only used if save_files / save_figs = True)
-        output_dir: str = ("fraction_lit_output/"),
-        plot_dir: str = "plots/"
+        output_dir: str = ("/Users/shasler/Documents/Research/Projects/exorings/fraction_lit_output/2xSat_faceon_ring/"),
+        plot_dir: str = "/Users/shasler/Documents/Research/Projects/exorings/fraction_lit_output/2xSat_faceon_ring/plots/"
         ):
         
         self.a_planet_au = a_planet_au
@@ -152,6 +152,16 @@ def get_orbit_frame(geom: DerivedGeometry):
     h_hat = rotation[:, 2]
     return orbit_coords, v1, v2, h_hat
 
+def get_spin_axis(geom: DerivedGeometry, v1, v2, h_hat):
+    """Unit ring normal/spin axis; obliquity is measured from the orbit normal h_hat."""
+    tilt_dir = np.cos(geom.spin_longitude) * v1 + np.sin(geom.spin_longitude) * v2
+    spin_axis = np.cos(geom.obliquity) * h_hat + np.sin(geom.obliquity) * tilt_dir
+    return spin_axis / np.linalg.norm(spin_axis)
+
+
+def ring_tilt_to_los(geom: DerivedGeometry, v1, v2, h_hat, observer_dir) -> float:
+    """Angle between ring normal and line of sight; 0 = face-on."""
+    return np.arccos(abs(np.dot(get_spin_axis(geom, v1, v2, h_hat), observer_dir)))
 
 # Illumination tests
 # ----------------------------------------------------------------------------
@@ -240,10 +250,7 @@ def process_epoch(epoch: int, true_anomaly: float,
     theta = true_anomaly + geom.omega
 
     # compute spin axis and ring tilt direction relative to orbital plane
-    tilt_dir = np.cos(geom.spin_longitude) * v1 + np.sin(geom.spin_longitude) * v2 # unit vector in orbit plane
-    spin_axis = np.cos(geom.obliquity) * h_hat + np.sin(geom.obliquity) * tilt_dir
-    spin_axis /= np.linalg.norm(spin_axis)
-    ring_normal = spin_axis
+    ring_normal = get_spin_axis(geom, v1, v2, h_hat)
 
     # get planet position at epoch
     planet_center, _s = g.kepler_orbit(geom.a, geom.e, geom.inc, geom.Omega, geom.omega, true_anomaly, theta)
