@@ -290,6 +290,17 @@ def phase_angle(I, theta):
     '''
     return np.arccos( np.sin(I) * np.sin(theta) )
 
+def read_ring_tilt(file_path):
+    """Ring tilt to the line of sight from an illumination file header."""
+    with open(file_path, "r") as f:
+        for line in f:
+            if not line.startswith("#"):
+                break
+            if line.startswith("# Ring tilt to LOS (rad):"):
+                return float(line.split(":")[1].strip())
+    raise ValueError(f"No ring tilt in header of {file_path}; regenerate with the updated simulation script.")
+                
+
 def read_illumination_file(file_path, rows_to_skip=14):
     """
     Read ringed_planet_illumination.py output file with headers for phase, true anomaly, 
@@ -698,7 +709,7 @@ def convert_planet_albedo_to_flux_wRingShadowing(albedo_spectrum, albedo_wavel, 
     return target_flux, FpFs, stellar_flux_at_planet
 
 def convert_ring_albedo_to_flux(albedo_spectrum, albedo_wavel, stellar_spectrum, 
-                                stellar_wavel, separation, R_inner, R_outer, inc_rad):
+                                stellar_wavel, separation, R_inner, R_outer, ringinc_rad):
     """
     Convert ring albedo spectrum (I/F) to flux space.
 
@@ -718,8 +729,8 @@ def convert_ring_albedo_to_flux(albedo_spectrum, albedo_wavel, stellar_spectrum,
         Inner radius of the ring in km
     R_outer : astropy.units.Quantity
         Outer radius of the ring in km
-    inc_rad : astropy.units.Quantity
-        Inclination of the ring in radians (obliquity)
+    ringinc_rad : astropy.units.Quantity
+        Angle between the ring normal and the line of sight in radians (0 = face-on)
 
     Returns
     -------
@@ -735,7 +746,7 @@ def convert_ring_albedo_to_flux(albedo_spectrum, albedo_wavel, stellar_spectrum,
     stellar_flux_at_target = np.interp(albedo_wavel, stellar_wavel, star_spec_at_target)
 
     # Convert source spectrum from albedo to flux space
-    target_flux = albedo_spectrum * stellar_flux_at_target * ( (R_outer**2 - R_inner**2) / separation_km**2 ) * np.cos(inc_rad) # albedo * F_star * (A_ring,projected / r**2)
+    target_flux = albedo_spectrum * stellar_flux_at_target * ( (R_outer**2 - R_inner**2) / separation_km**2 ) * np.cos(ringinc_rad) # albedo * F_star * (A_ring,projected / r**2)
 
     FpFs = target_flux / stellar_flux_at_target
 
