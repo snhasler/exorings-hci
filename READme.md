@@ -1,4 +1,4 @@
-# exorings
+# exorings-hci
 
 A forward model for simulating the illumination, shadowing, and reflected-light phase curves of ringed exoplanets.
 
@@ -9,7 +9,7 @@ A forward model for simulating the illumination, shadowing, and reflected-light 
      align="right"
      width="300">
 
-`exorings` is a Python-based modeling framework designed to investigate the observable signatures of planetary rings in directly imaged exoplanet systems. The code computes the illumination state of a ringed planet throughout its orbit while accounting for:
+`exorings-hci` is a Python-based modeling framework designed to investigate the observable signatures of planetary rings in directly imaged exoplanet systems. The code computes the illumination state of a ringed planet throughout its orbit while accounting for:
 
 - Planet illumination by the host star
 - Ring illumination by the host star
