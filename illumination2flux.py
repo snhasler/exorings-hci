@@ -16,13 +16,14 @@ This script:
 8. Overlays phase curves from all configurations.
 """
 
-import re
-from pathlib import Path
-from dataclasses import dataclass    
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import astropy.units as u
+
+import re
+from pathlib import Path
+from dataclasses import dataclass
 
 import utils
 
@@ -66,14 +67,31 @@ OBLIQ = 26.73           # ring obliquity in degrees
 FILTER_FILE = B1_FILTER # filter to use for processing
 
 @dataclass
-class RunConfig:
-    """
-    All parameters that vary between runs.
+class RunConfig():
+    '''
+    A class that holds all parameters that vary between runs.
 
     Each entry below should be one RunConfig. Parameters that
     are the same for every run (RPLANET, SEPARATION, file paths, etc.) stay as global 
     variables above.
-    """
+
+    Arguments:
+        label (str): legend text used in plots
+        file_dir (Path): directory that holds the illumination files
+        planet_illum_file (str): planet illumination filename
+        ring_illum_file (str): ring illumination filename
+        inc (float): orbital inclination to the line of sight (deg)
+        obliq (float): ring obliquity (deg)
+        ring_tilt (float): ring tilt to the line of sight (rad; from file header)
+        ecc (float): orbital eccentricity
+        ring_size (float): ring size used in filename (km)
+        epochs (int): number of orbital epochs simulated
+        rinner (Quantity): ring inner radius
+        router (Quantity): ring outer radius
+        color (str): plot color
+        linestyle (str): plot linestyle
+        filter_name (str): Roman filter name
+    '''
     label: str               # Legend text used in plots
     file_dir: Path           # Directory that holds the illumination files
     planet_illum_file: str   # Planet illumination filename
@@ -95,7 +113,12 @@ class RunConfig:
     filter_name: str = roman_filter     # Roman filter name
 
     def build_output_filenames(self) -> dict:
-        """Build output filenames from the simulation parameters."""
+        """
+        Build output filenames from the simulation parameters.
+
+        Returns:
+            dict: output filenames keyed by output type
+        """
         stem = (f"e{self.ecc}_inc{self.inc}deg_obliq{self.obliq}deg_"
                 f"{self.ring_size}Rring_{self.epochs}epochs_BAND{self.filter_name}")
         return {
@@ -137,10 +160,19 @@ DEFAULT_COLORS = [
     "#f2a154", "#5159a8", "#9bd85a", "#f25f5f",
 ]
 
-def parse_illum_filename(filename: str) -> dict:
-    """Extract simulation parameters froman illumination filename.
 
-    Raises ValueError if filename doesn't match the expected pattern.
+def parse_illum_filename(filename: str) -> dict:
+    """
+    Extract simulation parameters froman illumination filename.
+
+    Args:
+        filename (str): illumination filename
+
+    Returns:
+        dict: parsed kind, ecc, inc, obliq, ring_size, epochs, and timestamp
+
+    Raises:
+        ValueError: if filename doesn't match the expected pattern.
     """
     match = ILLUM_FILENAME_RE.match(filename)
     if not match:
@@ -173,28 +205,19 @@ def build_configs_from_dir(
     rinner and router are passed explicitly since they aren't uniquely recoverable from the 
     filenames
 
-    Parameters
-    ----------
-    file_dir : Path or str
-        Directory containing planet_illumination_*.txt and
-        ring_illumination_*.txt files (e.g.
-        "../2xSat_obl26.73_varyingIncl/").
-    rinner, router : astropy.units.Quantity
-        Ring inner/outer radii, applied to every config built from this
-        directory.
-    obliq : float, optional
-        If given, overrides the obliquity parsed from filenames (in the event that 
-        filenames carry a rounded value — e.g. "obliq26.7deg").
-    colors : list of str, optional
-        Matplotlib colors, assigned in order of increasing inclination.
-        Defaults to DEFAULT_COLORS, cycled if there are more files than
-        colors.
-    linestyle : str
-        Linestyle applied to every run built from this directory.
+    Parameters:
+        file_dir (Path or str): directory containing planet_illumination_*.txt and
+            ring_illumination_*.txt files (e.g. "../2xSat_obl26.73_varyingIncl/").
+        rinner (Quantity): ring inner radius, applied to every config built from this directory.
+        router (Quantity): ring outer radius, applied to every config built from this directory.
+        obliq (float, optional): if given, overrides the obliquity parsed from filenames (in the event that 
+            filenames carry a rounded value — e.g. "obliq26.7deg").
+        colors (list of str, optional): matplotlib colors, assigned in order of increasing inclination.
+            Defaults to DEFAULT_COLORS, cycled if there are more files than colors.
+        linestyle (str): linestyle applied to every run built from this directory.
 
-    Returns
-    -------
-    list of RunConfig, sorted by inclination.
+    Returns:
+        list of RunConfig: configs sorted by inclination.
     """
     file_dir = Path(file_dir)
     colors   = colors or DEFAULT_COLORS
@@ -252,6 +275,7 @@ def build_configs_from_dir(
         ))
     return configs
 
+
 # Set up configurations to process
 CONFIGS = []
 for _dir in RUN_DIRS:
@@ -271,18 +295,13 @@ def sort_by_phase(phases, nus, lit_fracs):
     Sort arrays by phase angle and ensure all angles are positive
     values.
     
-    Parameters
-    ----------
-    phases : array-like
-        Phase angles
-    nus : array-like
-        True anomalies
-    lit_fracs : array-like
-        Illumination fractions
-    Returns
-    -------
-    tuple of np.ndarray
-        Sorted (phases, nus, lit_fracs) arrays
+    Args:
+        phases (array-like): phase angles
+        nus (array-like): true anomalies
+        lit_fracs (array-like): illumination fractions
+
+    Returns:
+        tuple of np.ndarray: sorted (phases, nus, lit_fracs) arrays
     """
     phases    = np.abs(np.asarray(phases))
     nus       = np.asarray(nus)
@@ -292,8 +311,18 @@ def sort_by_phase(phases, nus, lit_fracs):
     phases_s, nus_s, lit_s = map(np.array, zip(*sorted_triplets))
     return phases_s, nus_s, lit_s
 
+
 def get_filter_lims_for_plot(filt_name):
-    '''Returns min, max wavelenghths of Roman filter of interest.'''
+    '''
+    Returns min, max wavelenghths of Roman filter of interest.
+
+    Args:
+        filt_name (str): Roman filter name
+
+    Returns:
+        float: minimum wavelength with non-zero transmission
+        float: maximum wavelength with non-zero transmission
+    '''
     # read in filter data
     wavel, transm = utils.read_roman_filter_curve(filt_name)
     # get range over which filter has non-zero transmission
@@ -301,9 +330,23 @@ def get_filter_lims_for_plot(filt_name):
 
     return wavel[mask].min(), wavel[mask].max()
 
+
 def plot_spectra_dict(wavelength, spectra_dict, title, 
                       ylabel="Albedo spectrum", cmap_name="viridis"):
-    """Plot spectra stored in the dictionary."""
+    """
+    Plot spectra stored in the dictionary.
+
+    Args:
+        wavelength (array-like): wavelength grid (nm)
+        spectra_dict (dict): spectra keyed by angle
+        title (str): plot title
+        ylabel (str): y-axis label
+        cmap_name (str): matplotlib colormap name
+
+    Returns:
+        fig (Figure): the matplotlib figure
+        ax (Axes): the axes containing the spectra
+    """
 
     # read in some filters for plotting
     b1_min, b1_max = get_filter_lims_for_plot("1F")
@@ -337,8 +380,19 @@ def plot_spectra_dict(wavelength, spectra_dict, title,
     plt.tight_layout()
     return fig, ax
 
+
 def compute_band_albedo_per_phase(spectra_dict, wavelength_nm, filter_file):
-    """Compute band-averaged albedo for each angle."""
+    """
+    Compute band-averaged albedo for each angle.
+
+    Args:
+        spectra_dict (dict): albedo spectra keyed by angle
+        wavelength_nm (array-like): wavelength grid (nm)
+        filter_file (str or Path): filter file for band integration
+
+    Returns:
+        dict: band-averaged albedo keyed by angle
+    """
     return {
         phase: utils.calc_albedo_in_band(
             filter_file, spectrum, wavelength_nm * u.nm,
@@ -346,30 +400,22 @@ def compute_band_albedo_per_phase(spectra_dict, wavelength_nm, filter_file):
         for phase, spectrum in spectra_dict.items()
     }
 
+
 def convert_planet_spectra_to_flux(spectra_dict, wavelength_angstrom, 
                                    stellar_spectrum, stellar_wavelength):
     """
     Convert planet albedo spectra to flux and planet-star flux ratio.
     
-    Parameters
-    ----------
-    spectra_dict : dict
-        Dictionary of planet albedo spectra keyed by angle.
-    wavelength_angstrom : array-like
-        Wavelength grid in Angstroms.
-    stellar_spectrum : array-like
-        Stellar flux spectrum.
-    stellar_wavelength : array-like
-        Stellar wavelength grid in Angstroms.
+    Args:
+        spectra_dict (dict): planet albedo spectra keyed by angle.
+        wavelength_angstrom (array-like): wavelength grid in Angstroms.
+        stellar_spectrum (array-like): stellar flux spectrum.
+        stellar_wavelength (array-like): stellar wavelength grid in Angstroms.
 
-    Returns
-    -------
-    flux_dict : dict
-        Dictionary of planet flux spectra
-    fpfs_dict : dict
-        Dictionary of planet-star flux ratio
-    fs_at_planet : array-like
-        Stellar flux at the planet's location
+    Returns:
+        flux_dict (dict): planet flux spectra
+        fpfs_dict (dict): planet-star flux ratio
+        fs_at_planet (array-like): stellar flux at the planet's location
     """
     flux_dict, fpfs_dict, fs_at_planet = {}, {}, None
     for phase, spectrum in spectra_dict.items():
@@ -393,6 +439,18 @@ def convert_ring_spectra_to_flux(spectra_dict, wavelength_angstrom,
     Ring geometry (inner/outer radius, obliquity) is taken from *cfg* so that
     configurations with different ring sizes or obliquities are handled
     correctly.
+
+    Args:
+        spectra_dict (dict): ring albedo spectra keyed by angle
+        wavelength_angstrom (array-like): wavelength grid in Angstroms
+        stellar_spectrum (array-like): stellar flux spectrum
+        stellar_wavelength (array-like): stellar wavelength grid in Angstroms
+        cfg (RunConfig): the run configuration
+
+    Returns:
+        flux_dict (dict): ring flux spectra
+        fpfs_dict (dict): ring-star flux ratio
+        fs_at_planet (array-like): stellar flux at the planet's location
     """
     flux_dict, fpfs_dict, fs_at_planet = {}, {}, None
     for phase, spectrum in spectra_dict.items():
@@ -408,24 +466,24 @@ def convert_ring_spectra_to_flux(spectra_dict, wavelength_angstrom,
         fpfs_dict[phase] = fpfs
     return flux_dict, fpfs_dict, fs_at_planet
 
+
 def compute_band_fluxes_from_albedo(spectra_dict, wavelength_angstrom,
                                     stellar_spectrum, stellar_wavelength, 
                                     filter_file):
     """
     Compute band-integrated planet flux and flux ratio from albedo spectra.
     
-    Parameters
-    ----------
-    spectra_dict : dict
-        Dictionary of albedo spectra keyed by angle.
-    wavelength_angstrom : array-like
-        Wavelenegth grid for albedo spectra in Angstroms.
-    stellar_spectrum : array-like
-        Stellar flux spectrum.
-    stellar_wavelength : array-like
-        Stellar wavelength grid in Angstroms.
-    filter_file : str or Path
-        Filter file for band integration.
+    Args:
+        spectra_dict (dict): albedo spectra keyed by angle.
+        wavelength_angstrom (array-like): wavelenegth grid for albedo spectra in Angstroms.
+        stellar_spectrum (array-like): stellar flux spectrum.
+        stellar_wavelength (array-like): stellar wavelength grid in Angstroms.
+        filter_file (str or Path): filter file for band integration.
+
+    Returns:
+        flux_band (dict): band-integrated planet flux
+        fpfs_band (dict): band-integrated flux ratio
+        albedo_band (dict): band-averaged albedo
     """
     flux_band, fpfs_band, albedo_band = {}, {}, {}
     for phase, spectrum in spectra_dict.items():
@@ -444,31 +502,23 @@ def compute_band_fluxes_from_albedo(spectra_dict, wavelength_angstrom,
         albedo_band[phase] = ag_band
     return flux_band, fpfs_band, albedo_band
 
+
 def compute_band_fluxes_from_flux_spectra(flux_spectra_dict, wavelength_angstrom,
                                           stellar_spectrum, stellar_wavelength, 
                                           filter_file):
     """
     Compute band-integrated flux and flux ratio from flux spectra.
     
-    Parameters
-    ----------
-    flux_spectra_dict : dict
-        Dictionary of flux spectra keyed by angle.
-    wavelength_angstrom : array-like
-        Wavelenegth grid for flux spectra in Angstroms.
-    stellar_spectrum : array-like
-        Stellar flux spectrum.
-    stellar_wavelength : array-like
-        Stellar wavelength grid in Angstroms.
-    filter_file : str or Path
-        Filter file for band integration.
+    Args:
+        flux_spectra_dict (dict): flux spectra keyed by angle.
+        wavelength_angstrom (array-like): wavelenegth grid for flux spectra in Angstroms.
+        stellar_spectrum (array-like): stellar flux spectrum.
+        stellar_wavelength (array-like): stellar wavelength grid in Angstroms.
+        filter_file (str or Path): filter file for band integration.
     
-    Returns
-    -------
-    flux_band : dict
-        Dictionary of band-integrated fluxes
-    fpfs_band : dict
-        Dictionary of band-integrated flux ratios
+    Returns:
+        flux_band (dict): band-integrated fluxes
+        fpfs_band (dict): band-integrated flux ratios
     """
     flux_band, fpfs_band = {}, {}
     for phase, flux_spectrum in flux_spectra_dict.items():
@@ -482,6 +532,7 @@ def compute_band_fluxes_from_flux_spectra(flux_spectra_dict, wavelength_angstrom
         fpfs_band[phase] = fpfs_val
     return flux_band, fpfs_band
 
+
 def process_config(cfg: RunConfig, lambda_vac_nm, jup_albedo, 
                    ring_albedo, stellar_wavel, stellar_spectrum, 
                    filter_file) -> dict:
@@ -491,20 +542,18 @@ def process_config(cfg: RunConfig, lambda_vac_nm, jup_albedo,
     Spectral data (jup_albedo, ring_albedo, stellar_) are passed in from
     main() so they are loaded only once and shared across all configs.
 
-    Parameters
-    ----------
-    cfg              : RunConfig   - simulation configuration
-    lambda_vac_nm    : ndarray     - wavelength grid (nm)
-    jup_albedo       : ndarray     - Jupiter's albedo spectrum
-    ring_albedo      : ndarray     - ring albedo spectrum on lambda_vac_nm grid
-    stellar_wavel    : ndarray     - stellar wavelength array (Angstrom)
-    stellar_spectrum : ndarray     - stellar flux spectrum
-    filter_file      : str or Path - filter file for band integration
+    Args:
+        cfg (RunConfig): simulation configuration
+        lambda_vac_nm (ndarray): wavelength grid (nm)
+        jup_albedo (ndarray): Jupiter's albedo spectrum
+        ring_albedo (ndarray): ring albedo spectrum on lambda_vac_nm grid
+        stellar_wavel (ndarray): stellar wavelength array (Angstrom)
+        stellar_spectrum (ndarray): stellar flux spectrum
+        filter_file (str or Path): filter file for band integration
 
-    Returns
-    -------
-    dict containing processed spectra, band-integrated quantities, and
-    metadata needed by the plotting functions.
+    Returns:
+        dict: processed spectra, band-integrated quantities, and
+            metadata needed by the plotting functions.
     """
     lambda_vac_A  = (lambda_vac_nm * u.nm).to(u.Angstrom)
     output_files  = cfg.build_output_filenames()
@@ -615,6 +664,7 @@ def process_config(cfg: RunConfig, lambda_vac_nm, jup_albedo,
         "fpfsBand_combined_dict":      fpfsBand_combined_dict,
     }
 
+
 # phase-curve plots
 def plot_all_phase_curves(all_results: list) -> tuple:
     """
@@ -624,14 +674,12 @@ def plot_all_phase_curves(all_results: list) -> tuple:
     plotted from the first config's phase coverage.  Each configuration's combined 
     (planet + ring) curve is plotted with the color and linestyle specified in its RunConfig.
 
-    Parameters
-    ----------
-    all_results : list of dict
-        List of result dicts returned by process_config().
+    Args:
+        all_results (list of dict): list of result dicts returned by process_config().
 
-    Returns
-    -------
-    fig, ax : matplotlib Figure and Axes
+    Returns:
+        fig (Figure): the matplotlib figure
+        ax (Axes): the axes containing the phase curves
     """
     fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -664,7 +712,9 @@ def plot_all_phase_curves(all_results: list) -> tuple:
                 dpi=300, bbox_inches='tight')
     return fig, ax
 
+
 def main():
+    """Process every configuration and overlay the phase curves."""
     # Load spectral data once 
     lambda_vac_nm, jup_albedo = utils.get_karkoschka_Jupiter_spectrum()
     ring_albedo               = utils.load_ring_albedo(lambda_vac_nm)
