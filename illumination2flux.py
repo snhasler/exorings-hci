@@ -69,7 +69,7 @@ FILTER_FILE = B1_FILTER # filter to use for processing
 @dataclass
 class RunConfig():
     '''
-    A class that holds all parameters that vary between runs.
+    All parameters that vary between runs.
 
     Each entry below should be one RunConfig. Parameters that
     are the same for every run (RPLANET, SEPARATION, file paths, etc.) stay as global 
@@ -139,8 +139,8 @@ class RunConfig():
             }
 
 # Each run directory (one ring size + obliquity) holds pairs of
-# planet_illumination_e{ecc}_inc{inc}deg_obliq{obliq}deg_{ring_size}Rring_{epochs}epochs_{timestamp}.txt
-# ring_illumination_e{ecc}_inc{inc}deg_obliq{obliq}deg_{ring_size}Rring_{epochs}epochs_{timestamp}.txt
+#    planet_illumination_e{ecc}_inc{inc}deg_obliq{obliq}deg_{ring_size}Rring_{epochs}epochs_{timestamp}.txt
+#    ring_illumination_e{ecc}_inc{inc}deg_obliq{obliq}deg_{ring_size}Rring_{epochs}epochs_{timestamp}.txt
 # files that differ only by inclination. The regex below recovers ecc/inc/obliq/ring_size/epochs 
 # from the filename so the pairs can be matched and a RunConfig can be built automatically.
 ILLUM_FILENAME_RE = re.compile(
@@ -163,7 +163,7 @@ DEFAULT_COLORS = [
 
 def parse_illum_filename(filename: str) -> dict:
     """
-    Extract simulation parameters froman illumination filename.
+    Extract simulation parameters from an illumination filename.
 
     Args:
         filename (str): illumination filename
@@ -330,7 +330,6 @@ def get_filter_lims_for_plot(filt_name):
 
     return wavel[mask].min(), wavel[mask].max()
 
-
 def plot_spectra_dict(wavelength, spectra_dict, title, 
                       ylabel="Albedo spectrum", cmap_name="viridis"):
     """
@@ -380,7 +379,6 @@ def plot_spectra_dict(wavelength, spectra_dict, title,
     plt.tight_layout()
     return fig, ax
 
-
 def compute_band_albedo_per_phase(spectra_dict, wavelength_nm, filter_file):
     """
     Compute band-averaged albedo for each angle.
@@ -399,7 +397,6 @@ def compute_band_albedo_per_phase(spectra_dict, wavelength_nm, filter_file):
         )
         for phase, spectrum in spectra_dict.items()
     }
-
 
 def convert_planet_spectra_to_flux(spectra_dict, wavelength_angstrom, 
                                    stellar_spectrum, stellar_wavelength):
@@ -466,7 +463,6 @@ def convert_ring_spectra_to_flux(spectra_dict, wavelength_angstrom,
         fpfs_dict[phase] = fpfs
     return flux_dict, fpfs_dict, fs_at_planet
 
-
 def compute_band_fluxes_from_albedo(spectra_dict, wavelength_angstrom,
                                     stellar_spectrum, stellar_wavelength, 
                                     filter_file):
@@ -502,7 +498,6 @@ def compute_band_fluxes_from_albedo(spectra_dict, wavelength_angstrom,
         albedo_band[phase] = ag_band
     return flux_band, fpfs_band, albedo_band
 
-
 def compute_band_fluxes_from_flux_spectra(flux_spectra_dict, wavelength_angstrom,
                                           stellar_spectrum, stellar_wavelength, 
                                           filter_file):
@@ -531,7 +526,6 @@ def compute_band_fluxes_from_flux_spectra(flux_spectra_dict, wavelength_angstrom
         flux_band[phase] = fp_band
         fpfs_band[phase] = fpfs_val
     return flux_band, fpfs_band
-
 
 def process_config(cfg: RunConfig, lambda_vac_nm, jup_albedo, 
                    ring_albedo, stellar_wavel, stellar_spectrum, 
@@ -664,7 +658,6 @@ def process_config(cfg: RunConfig, lambda_vac_nm, jup_albedo,
         "fpfsBand_combined_dict":      fpfsBand_combined_dict,
     }
 
-
 # phase-curve plots
 def plot_all_phase_curves(all_results: list) -> tuple:
     """
@@ -712,9 +705,7 @@ def plot_all_phase_curves(all_results: list) -> tuple:
                 dpi=300, bbox_inches='tight')
     return fig, ax
 
-
 def main():
-    """Process every configuration and overlay the phase curves."""
     # Load spectral data once 
     lambda_vac_nm, jup_albedo = utils.get_karkoschka_Jupiter_spectrum()
     ring_albedo               = utils.load_ring_albedo(lambda_vac_nm)
