@@ -6,8 +6,7 @@ def rotation_matrix_x(theta):
 
     Parameters
     ----------
-    theta : float 
-        Angle in radians.
+    theta (float) : Angle in radians.
     """
     c, s = np.cos(theta), np.sin(theta)
     return np.array([[1, 0, 0],
@@ -21,8 +20,7 @@ def rotation_matrix_z(theta):
     
     Parameters
     ----------
-    theta : float
-        Angle in radians.
+    theta (float) : Angle in radians.
         
     """
     c, s = np.cos(theta), np.sin(theta)
@@ -36,12 +34,9 @@ def R_pCi(inc, Omega, omega):
 
     Parameters
     ----------
-    inc : float
-        Inclination in radians.
-    Omega : float
-        Longitude of ascending node in radians.
-    omega : float
-        Argument of periapsis in radians.
+    inc (float) : Inclination in radians.
+    Omega (float) : Longitude of ascending node in radians.
+    omega (float) : Argument of periapsis in radians.
     """
     R = rotation_matrix_z(Omega) @ rotation_matrix_x(inc) @ rotation_matrix_z(omega)
     return R
@@ -50,8 +45,7 @@ def ang_momentum_vector(R_pCi):
     """
     Parameters
     ----------
-    R_pCi : np.ndarray
-        Transformation matrix from perifocal to inertial coordinates.
+    R_pCi (np.ndarray) : Transformation matrix from perifocal to inertial coordinates.
 
     Returns 
     -------
@@ -68,8 +62,7 @@ def orthogonal_to_h(h_vector):
     
     Parameters
     ----------
-    h_vector: np.array
-        Angular momentum vector
+    h_vector (np.ndarray) : Angular momentum vector
 
     Returns
     -------
@@ -102,13 +95,11 @@ def obliquity_rot_matrix(obliquitiy_rad, v1):
 
     Parameters
     ----------
-    obliquity_rad : float
-        Obliquity in radians
+    obliquity_rad (float) : Obliquity in radians
 
     Returns
     -------
-    np.ndarray
-        rotation matrix to apply for obliquity rotation
+    np.ndarray : Rotation matrix to apply for obliquity rotation
     '''
     cos_epsilon = np.cos(obliquitiy_rad)
     sin_epsilon = np.sin(obliquitiy_rad)
@@ -133,8 +124,7 @@ def get_ring_normal(ring_points):
 
     Parameters
     ----------
-    ring_points: np.ndarray
-        Array of shape (N, 3) containing the 3D coordinates of points sampled on the ring plane.
+    ring_points (np.ndarray) : Array of shape (N, 3) containing the 3D coordinates of points sampled on the ring plane.
     '''
     # Take 3 random points from the ring
     p1 = np.array([ring_points[10]])
@@ -156,20 +146,13 @@ def kepler_orbit(a, e, inc, Omega, omega, f, theta):
 
     Parameters
     ----------
-    a : float
-        Semi-major axis
-    e : float
-        Orbital eccentricity
-    inc : float
-        Inclination in radians
-    Omega : float
-        Longitude of ascending node in radians
-    omega : float
-        Argument of periapsis in radians
-    f : float
-        True anomaly in radians
-    theta : float
-        true_anomaly + omega
+    a (float): Semi-major axis
+    e (float): Orbital eccentricity
+    inc (float): Inclination in radians
+    Omega (float): Longitude of ascending node in radians
+    omega (float): Argument of periapsis in radians
+    f (float): True anomaly in radians
+    theta (float): true_anomaly + omega
     """
     r = a * (1 - e**2) / (1 + e * np.cos(f))
     x = r * np.cos(f)
@@ -190,18 +173,12 @@ def full_orbit(a, e, inc, Omega, w, true_anomaly_arr=np.linspace(0, 2*np.pi, 200
 
     Parameters
     ----------
-    a : float
-        Semi-major axis
-    e : float
-        Orbital eccentricity
-    inc : float
-        Inclination in radians
-    Omega : float
-        Longitude of ascending node in radians
-    w : float
-        Argument of periapsis in radians
-    true_anomaly_arr : np.ndarray
-        Array of true anomaly values to sample
+    a (float): Semi-major axis
+    e (float): Orbital eccentricity
+    inc (float): Inclination in radians
+    Omega (float): Longitude of ascending node in radians
+    w (float): Argument of periapsis in radians
+    true_anomaly_arr (np.ndarray): Array of true anomaly values to sample
     """
     inc = np.pi - inc  
     orbit_coords = []
@@ -228,10 +205,8 @@ def sample_sphere(n_theta=60, n_phi=120):
     
     Parameters
     ----------
-    n_theta: int
-        Number of polar angle divisions
-    n_phi: int
-        Number of azimuthal angle divisions
+    n_theta (int) : Number of polar angle divisions
+    n_phi (int) : Number of azimuthal angle divisions
     '''
     pts = []
     normals = []
@@ -256,14 +231,10 @@ def sample_ring(r_inner, r_outer, n_r=50, n_phi=180):
     
     Parameters
     ----------
-    r_inner: float
-        Inner radius of the ring
-    r_outer: float
-        Outer radius of the ring
-    n_r: int
-        Number of radial divisions on the ring
-    n_phi: int
-        Number of azimuthal divisions on the ring
+    r_inner (float): Inner radius of the ring
+    r_outer (float): Outer radius of the ring
+    n_r (int): Number of radial divisions on the ring
+    n_phi (int): Number of azimuthal divisions on the ring
     '''
     pts = []
 
