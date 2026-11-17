@@ -6,6 +6,15 @@ S. Hasler
 import numpy as np
 
 def normalize(v):
+    """
+    Normalize a vector to unit length.
+
+    Args:
+        v (ndarray): vector to normalize
+
+    Returns:
+        ndarray: unit vector along v
+    """
     return v / np.linalg.norm(v)
 
 def intersect_sphere_distance(ray_origin, ray_dir, sphere_center, sphere_radius):
@@ -13,21 +22,14 @@ def intersect_sphere_distance(ray_origin, ray_dir, sphere_center, sphere_radius)
     Ray–sphere intersection.
     Returns nearest positive intersection distance t, or None.
 
-    Parameters
-    ----------
-    ray_origin : ndarray
-        Origin of the ray
-    ray_dir : ndarray
-        Direction of the ray
-    sphere_center : ndarray
-        Center of the sphere
-    sphere_radius : float
-        Radius of the sphere
+    Args:
+        ray_origin (ndarray): origin of the ray
+        ray_dir (ndarray): direction of the ray
+        sphere_center (ndarray): center of the sphere
+        sphere_radius (float): radius of the sphere
     
-    Returns
-    -------
-    t : float or None
-        Nearest positive intersection distance or None if no intersection
+    Returns:
+        float or None: nearest positive intersection distance or None if no intersection
     """
     ray_dir = normalize(ray_dir)
 
@@ -54,25 +56,16 @@ def intersect_ring_distance(ray_origin, ray_dir,
     Ray–ring intersection via ring plane + radial bounds.
     Make sure all distances have the same units.
 
-    Parameters
-    ----------
-    ray_origin : ndarray
-        Origin of the ray
-    ray_dir : ndarray
-        Direction of the ray
-    ring_center : ndarray
-        Center of the ring plane
-    ring_normal : ndarray
-        Normal vector of the ring plane
-    r_inner : float
-        Inner radius of the ring
-    r_outer : float
-        Outer radius of the ring
+    Args:
+        ray_origin (ndarray): origin of the ray
+        ray_dir (ndarray): direction of the ray
+        ring_center (ndarray): center of the ring plane
+        ring_normal (ndarray): normal vector of the ring plane
+        r_inner (float): inner radius of the ring
+        r_outer (float): outer radius of the ring
     
-    Returns
-    -------
-    t : float or None
-        Nearest positive intersection distance or None if no intersection
+    Returns:
+        float or None: nearest positive intersection distance or None if no intersection
     """
     ray_dir = normalize(ray_dir)
     ring_normal = normalize(ring_normal)
