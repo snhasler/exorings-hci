@@ -4,12 +4,13 @@ Script to simulate and visualize the illumination of a ringed planet across orbi
 """
 from __future__ import annotations
 
-import datetime
-from pathlib import Path
-from typing import List, Tuple
 import numpy as np
 import astropy.units as u
 import matplotlib.pyplot as plt
+
+import datetime
+from pathlib import Path
+from typing import List, Tuple
 
 import geometry as g
 import ray_casting as rc
@@ -21,6 +22,30 @@ class SimulationParams:
     """
     Simulation parameters for planet, ring, orbit, and 
     output directories for writing files/plots.
+
+    Arguments:
+        a_planet_au (float): true planet separation (AU)
+        e (float): eccentricity
+        inc_deg (float): orbit inclination (deg)
+        Omega_deg (float): longitude of ascending node (deg)
+        omega_deg (float): argument of periastron (deg)
+        n_epochs (int): number of orbital positions to sample -- 250 generally good for phase curves
+        planet_radius_km (float): planet radius (km), default is the Jupiter radius
+        ring_inner (float): inner ring radius [R_planet]
+        ring_outer (float): outer ring radius [R_planet]
+        obliquity_deg (float): ring obliquity (epsilon, deg)
+        spin_longitude_deg (float): planet spin longitude (phi_s, deg)
+        distance_pc (float): observer distance (pc)
+        n_theta_planet (int): number of planet sampling points in theta
+        n_phi_planet (int): number of planet sampling points in phi
+        n_r_ring (int): number of ring sampling points in radius
+        n_phi_ring (int): number of ring sampling points in phi
+        plot (bool): combined 3D plot of all epochs
+        plot_closeup (bool): close-up view of ringed planet per epoch
+        save_files (bool): write illumination-fraction .txt files
+        save_figs (bool): save figures
+        output_dir (str): output location for the files, only used if save_files = True
+        plot_dir (str): output location for the figures, only used if save_figs = True
     """
 
     def __init__(
@@ -31,13 +56,13 @@ class SimulationParams:
         inc_deg: float = 90.0,              # orbit inclination (deg)
         Omega_deg: float = 0.0,             # longitude of ascending node (deg)
         omega_deg: float = 170.0,           # argument of periastron (deg)
-        n_epochs: int = 250,                 # number of orbital positions to sample -- 250 generally good for phase curves
+        n_epochs: int = 250,                # number of orbital positions to sample -- 250 generally good for phase curves
         # Planet & rings
         planet_radius_km: float = 69911.0,  # Jupiter radius [km]
         ring_inner: float = 1.43,           # inner ring radius [R_planet]
         ring_outer: float = 2.47,           # outer ring radius [R_planet]
-        obliquity_deg: float = 26.73,        # ring obliquity (epsilon, deg) (for i=90°, face-on =)
-        spin_longitude_deg: float = -90.0,    # planet spin longitude (phi_s, deg)
+        obliquity_deg: float = 26.73,       # ring obliquity (epsilon, deg) (for i=90°, face-on =)
+        spin_longitude_deg: float = -90.0,  # planet spin longitude (phi_s, deg)
         # Observer
         distance_pc: float = 10.0,          # observer distance (pc)
         # Sampling resolution for planet and ring
@@ -47,14 +72,14 @@ class SimulationParams:
         n_phi_ring: int = 360,
         # What to run
         plot: bool = False,                 # combined 3D plot of all epochs
-        plot_closeup: bool = False,          # close-up view of ringed planet per epoch
-        save_files: bool = True,           # write illumination-fraction .txt files
-        save_figs: bool = False,             # save figures 
+        plot_closeup: bool = False,         # close-up view of ringed planet per epoch
+        save_files: bool = True,            # write illumination-fraction .txt files
+        save_figs: bool = False,            # save figures 
         # Output locations (only used if save_files / save_figs = True)
         output_dir: str = ("fraction_lit_output/"),
         plot_dir: str = "plots/"
         ):
-        
+
         self.a_planet_au = a_planet_au
         self.e = e
         self.inc_deg = inc_deg
@@ -98,6 +123,15 @@ class DerivedGeometry:
 
     @classmethod
     def from_config(cls, cfg: SimulationParams) -> "DerivedGeometry":
+        """
+        A method that builds the derived geometry from a simulation config.
+
+        Args:
+            cfg (SimulationParams): the simulation parameters
+
+        Returns:
+            DerivedGeometry: the derived quantities (angles in rad, lengths in km)
+        """
         return cls(
             e=cfg.e,
             inc=np.radians(cfg.inc_deg),
@@ -112,9 +146,28 @@ class DerivedGeometry:
             d=(cfg.distance_pc * u.pc).to(u.km).value)
 
 
-class EpochResult:
-    """Everything computed for one orbital epoch."""
+class EpochResult():
+    '''
+    Everything computed for one orbital epoch.
 
+    Arguments:
+        epoch (int): epoch index
+        true_anomaly (float): true anomaly (rad)
+        planet_center (ndarray): planet position
+        star_dir (ndarray): unit vector from the planet to the star
+        ring_normal (ndarray): unit ring normal
+        phase_angle (float): phase angle (deg), negative if the planet is left of the star
+        planet_pts (ndarray): sampled planet surface points
+        planet_lit (ndarray): boolean mask of illuminated planet points
+        planet_observable (ndarray): boolean mask of planet points visible to the observer
+        ring_pts (ndarray): sampled ring points
+        ring_lit (ndarray): boolean mask of ring points illuminated by the star
+        ring_observable (ndarray): boolean mask of observable ring points
+        planet_frac (float): illuminated planet fraction
+        ring_frac (float): illuminated ring fraction
+        ring_observable_frac (float): observable ring fraction
+        planet_observable_frac (float): illuminated fraction of the observable planet
+    '''
     def __init__(self, epoch, true_anomaly, planet_center, star_dir, ring_normal,
                  phase_angle, planet_pts, planet_lit, planet_observable,
                  ring_pts, ring_lit, ring_observable,
@@ -137,13 +190,31 @@ class EpochResult:
         self.planet_observable_frac = planet_observable_frac
 
 
-class SimulationResults:
+class SimulationResults():
+    '''
+    Results of all simulated epochs.
+
+    Arguments:
+        epochs (list): list of EpochResult, one per epoch
+    '''
     def __init__(self, epochs: List["EpochResult"]):
         self.epochs = epochs
 
+
 # Orbit / reference frame (computed once, shared across all epochs)
 def get_orbit_frame(geom: DerivedGeometry):
-    """Full orbit track and the orbit-plane vectors (v1, v2, h_hat)."""
+    """
+    Full orbit track and the orbit-plane vectors (v1, v2, h_hat).
+
+    Args:
+        geom (DerivedGeometry): the derived system geometry
+
+    Returns:
+        orbit_coords (ndarray): full orbit track
+        v1 (ndarray): first unit vector in the orbit plane
+        v2 (ndarray): second unit vector in the orbit plane
+        h_hat (ndarray): unit orbit normal
+    """
     orbit_coords = g.full_orbit(geom.a, geom.e, geom.inc, geom.Omega, geom.omega)
     R_pCi = g.R_pCi(geom.inc, geom.Omega, geom.omega)
     h = g.ang_momentum_vector(R_pCi)
@@ -152,15 +223,39 @@ def get_orbit_frame(geom: DerivedGeometry):
     h_hat = rotation[:, 2]
     return orbit_coords, v1, v2, h_hat
 
+
 def get_spin_axis(geom: DerivedGeometry, v1, v2, h_hat):
-    """Unit ring normal/spin axis; obliquity is measured from the orbit normal h_hat."""
+    """
+    Unit ring normal/spin axis; obliquity is measured from the orbit normal h_hat.
+
+    Args:
+        geom (DerivedGeometry): the derived system geometry
+        v1 (ndarray): first unit vector in the orbit plane
+        v2 (ndarray): second unit vector in the orbit plane
+        h_hat (ndarray): unit orbit normal
+
+    Returns:
+        ndarray: unit spin axis
+    """
     tilt_dir = np.cos(geom.spin_longitude) * v1 + np.sin(geom.spin_longitude) * v2
     spin_axis = np.cos(geom.obliquity) * h_hat + np.sin(geom.obliquity) * tilt_dir
     return spin_axis / np.linalg.norm(spin_axis)
 
 
 def ring_tilt_to_los(geom: DerivedGeometry, v1, v2, h_hat, observer_dir) -> float:
-    """Angle between ring normal and line of sight; 0 = face-on."""
+    """
+    Angle between ring normal and line of sight; 0 = face-on.
+
+    Args:
+        geom (DerivedGeometry): the derived system geometry
+        v1 (ndarray): first unit vector in the orbit plane
+        v2 (ndarray): second unit vector in the orbit plane
+        h_hat (ndarray): unit orbit normal
+        observer_dir (ndarray): unit vector toward the observer
+
+    Returns:
+        float: ring tilt to the line of sight (rad)
+    """
     return np.arccos(abs(np.dot(get_spin_axis(geom, v1, v2, h_hat), observer_dir)))
 
 # Illumination tests
@@ -170,6 +265,21 @@ def planet_illumination(planet_pts, planet_normals, star_position, observer_dir,
                          ring_outer) -> Tuple[np.ndarray, np.ndarray]:
     """
     Illumination/visibility test for the planet.
+
+    Args:
+        planet_pts (ndarray): sampled planet surface points
+        planet_normals (ndarray): outward normals at the planet points
+        star_position (ndarray): star position
+        observer_dir (ndarray): unit vector toward the observer
+        planet_center (ndarray): planet position
+        planet_radius (float): planet radius (km)
+        ring_normal (ndarray): unit ring normal
+        ring_inner (float): inner ring radius (km)
+        ring_outer (float): outer ring radius (km)
+
+    Returns:
+        planet_lit (ndarray): boolean mask of illuminated planet points
+        planet_observable (ndarray): boolean mask of planet points visible to the observer
     """
     planet_lit = []
     planet_observable = []
@@ -209,6 +319,18 @@ def ring_illumination(ring_pts, star_position, observer_dir,
                        ring_normal) -> Tuple[np.ndarray, np.ndarray]:
     """
     Illumination/visibility test for the ring.
+
+    Args:
+        ring_pts (ndarray): sampled ring points
+        star_position (ndarray): star position
+        observer_dir (ndarray): unit vector toward the observer
+        planet_center (ndarray): planet position
+        planet_radius (float): planet radius (km)
+        ring_normal (ndarray): unit ring normal
+
+    Returns:
+        ring_lit (ndarray): boolean mask of ring points illuminated by the star
+        ring_observable (ndarray): boolean mask of observable ring points
     """
     ring_lit = []
     ring_observable = []
@@ -246,7 +368,23 @@ def ring_illumination(ring_pts, star_position, observer_dir,
 def process_epoch(epoch: int, true_anomaly: float, 
                   cfg: SimulationParams, geom: DerivedGeometry, v1, 
                   v2, h_hat, star_position, observer_dir) -> EpochResult:
+    """
+    Compute the planet/ring illumination for one orbital epoch.
 
+    Args:
+        epoch (int): epoch index
+        true_anomaly (float): true anomaly (rad)
+        cfg (SimulationParams): the simulation parameters
+        geom (DerivedGeometry): the derived system geometry
+        v1 (ndarray): first unit vector in the orbit plane
+        v2 (ndarray): second unit vector in the orbit plane
+        h_hat (ndarray): unit orbit normal
+        star_position (ndarray): star position
+        observer_dir (ndarray): unit vector toward the observer
+
+    Returns:
+        EpochResult: the results for this epoch
+    """
     theta = true_anomaly + geom.omega
 
     # compute spin axis and ring tilt direction relative to orbital plane
@@ -317,10 +455,18 @@ def process_epoch(epoch: int, true_anomaly: float,
                        ring_frac=ring_frac, ring_observable_frac=ring_observable_frac, 
                        planet_observable_frac=planet_observable_frac)
 
+
 # Plotting
 def init_3d_plot(orbit_coords):
     """
-    Initialize the 3D orbit plot    
+    Initialize the 3D orbit plot
+
+    Args:
+        orbit_coords (ndarray): full orbit track, shape (N, 3)
+
+    Returns:
+        fig1 (Figure): the matplotlib figure
+        ax (Axes3D): the 3D axes containing the orbit
     """
     fig1 = plt.figure(figsize=(7, 7))
     ax = fig1.add_subplot(111, projection="3d")
@@ -334,6 +480,14 @@ def plot_epoch_on_3d(ax, res: EpochResult, cfg: SimulationParams, geom: DerivedG
     """
     Plot all epochs together with the illuminated/shadowed planet/ring points
     shown. This should really only be done for a few epochs at a time.
+
+    Args:
+        ax (Axes3D): the 3D axes to draw on
+        res (EpochResult): the results for this epoch
+        cfg (SimulationParams): the simulation parameters
+        geom (DerivedGeometry): the derived system geometry
+        star_position (ndarray): star position
+        observer_dir (ndarray): unit vector toward the observer
     """
     ax.scatter(*res.planet_pts[res.planet_lit].T, s=1, alpha=0.6, c="gold")
     ax.scatter(*res.planet_pts[~res.planet_lit].T, s=1, alpha=0.5, c="black")
@@ -354,8 +508,15 @@ def plot_epoch_on_3d(ax, res: EpochResult, cfg: SimulationParams, geom: DerivedG
 
 def finalize_3d_plot(fig1, ax, cfg: SimulationParams, geom: DerivedGeometry, last_planet_center):
     """
-    Finalize the plot parameters -- set the axes limits, labels, aspect ratio, title, 
-    save figure(s). 
+    Finalize the plot parameters -- set the axes limits, labels, aspect ratio, title,
+    save figure(s).
+
+    Args:
+        fig1 (Figure): the matplotlib figure
+        ax (Axes3D): the 3D axes
+        cfg (SimulationParams): the simulation parameters
+        geom (DerivedGeometry): the derived system geometry
+        last_planet_center (ndarray): planet position at the last epoch
     """
     planet_sep = np.linalg.norm(last_planet_center)
     max_radius = geom.ring_outer + planet_sep + 1e6
@@ -385,6 +546,11 @@ def finalize_3d_plot(fig1, ax, cfg: SimulationParams, geom: DerivedGeometry, las
 def plot_closeup(res: EpochResult, cfg: SimulationParams, geom: DerivedGeometry):
     """
     Plot the close-up view of each epoch to visualize the ringed planet system.
+
+    Args:
+        res (EpochResult): the results for this epoch
+        cfg (SimulationParams): the simulation parameters
+        geom (DerivedGeometry): the derived system geometry
     """
     fig2, ax2 = plt.subplots(figsize=(7, 7))
 
@@ -439,16 +605,38 @@ def plot_closeup(res: EpochResult, cfg: SimulationParams, geom: DerivedGeometry)
 
 # File output
 def output_filenames(cfg: SimulationParams, geom: DerivedGeometry, timestamp: str) -> Tuple[Path, Path]:
+    """
+    Build the output file paths for the planet and ring illumination files.
+
+    Args:
+        cfg (SimulationParams): the simulation parameters
+        geom (DerivedGeometry): the derived system geometry
+        timestamp (str): timestamp appended to the file names
+
+    Returns:
+        Path: planet illumination file path
+        Path: ring illumination file path
+    """
     out_dir = Path(cfg.output_dir)
     ring_width = geom.ring_outer - geom.ring_inner
     file_stem = (f"e{cfg.e}_inc{cfg.inc_deg:.1f}deg_obliq{cfg.obliquity_deg:.1f}deg_"
                  f"{ring_width:.2f}Rring_{cfg.n_epochs}epochs_{timestamp}.txt")
-    
+
     return out_dir / f"planet_illumination_{file_stem}", out_dir / f"ring_illumination_{file_stem}"
 
 
 def write_header(cfg: SimulationParams, geom: DerivedGeometry, ring_tilt_rad: float,
                  f_planet_illum: Path, f_ring_illum: Path):
+    """
+    Write the simulation header to the planet and ring output files.
+
+    Args:
+        cfg (SimulationParams): the simulation parameters
+        geom (DerivedGeometry): the derived system geometry
+        ring_tilt_rad (float): ring tilt to the line of sight (rad)
+        f_planet_illum (Path): planet illumination file path
+        f_ring_illum (Path): ring illumination file path
+    """
     header = (
         "# Ringed planet illumination simulation\n"
         f"# Semi-major axis (km): {geom.a}\n"
@@ -469,6 +657,15 @@ def write_header(cfg: SimulationParams, geom: DerivedGeometry, ring_tilt_rad: fl
 
 
 def save_outputs(cfg: SimulationParams, epochs: List[EpochResult], f_planet_illum: Path, f_ring_illum: Path):
+    """
+    Append the phase-sorted illumination fractions to the output files.
+
+    Args:
+        cfg (SimulationParams): the simulation parameters
+        epochs (list): list of EpochResult, one per epoch
+        f_planet_illum (Path): planet illumination file path
+        f_ring_illum (Path): ring illumination file path
+    """
     if not cfg.save_files:
         return
 
@@ -493,7 +690,15 @@ def save_outputs(cfg: SimulationParams, epochs: List[EpochResult], f_planet_illu
 
 # Run the full simulation to calculate the illumination of the ringed planet
 def run_simulation(cfg: SimulationParams = None) -> SimulationResults:
-    """Run the full simulation (all epochs) for the given system configuration."""
+    """
+    Run the full simulation (all epochs) for the given system configuration.
+
+    Args:
+        cfg (SimulationParams): the simulation parameters, defaults to SimulationParams()
+
+    Returns:
+        SimulationResults: the results for all epochs
+    """
     cfg = cfg or SimulationParams()
     geom = DerivedGeometry.from_config(cfg)
 
