@@ -10,28 +10,25 @@ def normalize(vector):
     '''
     Normalize vector
 
-    Parameters
-    ----------
-    vector : _type_
-        _description_
+    Args:
+        vector (ndarray): vector to normalize
 
-    Returns
-    -------
-    _type_
-        _description_
+    Returns:
+        ndarray: unit vector along the input vector
     '''
     return vector / np.linalg.norm(vector)
+
 
 def on_sky_separation(system_distance_pc, planet_separation_AU):
     '''
     Calculate the on-sky separation of the planet from its host star in arcseconds
 
-    Parameters
-    ----------
-    system_distance_pc : astropy.units.quantity.Quantity
-        Distance of system from observer
-    planet_separation_AU : astropy.units.quantity.Quantity
-        Planet-star separation
+    Args:
+        system_distance_pc (astropy.units.quantity.Quantity): distance of system from observer
+        planet_separation_AU (astropy.units.quantity.Quantity): planet-star separation
+
+    Returns:
+        astropy.units.quantity.Quantity: on-sky separation in arcseconds
 
     '''
     # Check that input values are astropy quantities
@@ -52,16 +49,12 @@ def ring_area(R_inner, R_outer):
     '''
     Calculate area of a ring given the inner and outer radii
 
-    Parameters
-    ----------
-    R_inner : float
-        Inner radius
-    R_outer : float
-        Outer radius
+    Args:
+        R_inner (float): inner radius
+        R_outer (float): outer radius
 
-    Returns
-    -------
-    Area of ring in input units squared
+    Returns:
+        float: area of ring in input units squared
 
     '''
     return np.pi * (R_outer**2 - R_inner**2) 
@@ -70,12 +63,12 @@ def lambda_over_D(wavelength, diameter):
     '''
     Calculate angular resolution (lambda / D) in milliarcseconds
 
-    Parameters
-    ----------
-    wavelength : astropy.units.quantity.Quantity
-        Wavelength of observation [m]
-    diameter : astropy.units.quantity.Quantity
-        Diameter of telescope aperture [m]
+    Args:
+        wavelength (astropy.units.quantity.Quantity): wavelength of observation [m]
+        diameter (astropy.units.quantity.Quantity): diameter of telescope aperture [m]
+
+    Returns:
+        astropy.units.quantity.Quantity: angular resolution in milliarcseconds
 
     '''
     # Check that input is an astropy quantity
@@ -96,15 +89,13 @@ def ring_angular_extent(R_outer, system_distance):
     '''
     Calculate angular extent of rings in milliarcseconds.
     
-    Parameters
-    ----------
-    R_inner : astropy.units.quantity.Quantity
-        Inner radius of rings [km]
-    R_outer : astropy.units.quantity.Quantity
-        Outer radius of rings [km]
-    system_distance : astropy.units.quantity.Quantity
-        Distance to system [pc]
+    Args:
+        R_inner (astropy.units.quantity.Quantity): inner radius of rings [km]
+        R_outer (astropy.units.quantity.Quantity): outer radius of rings [km]
+        system_distance (astropy.units.quantity.Quantity): distance to system [pc]
     
+    Returns:
+        astropy.units.quantity.Quantity: angular extent of the rings in milliarcseconds
     '''
     # Check if system distance has units and is entered in pc
     if not isinstance(system_distance, u.Quantity):
@@ -125,10 +116,12 @@ def get_karkoschka_Jupiter_spectrum(filepath="spectra/planet/karkoschka1995low.d
     """
     Read in Karkoschka Jupiter albedo spectrum from file
 
-    Parameters
-    ----------
-    filepath : str
-        Path to Karkoschka Jupiter albedo spectrum file
+    Args:
+        filepath (str): path to Karkoschka Jupiter albedo spectrum file
+
+    Returns:
+        vacuum_lambda_nm (ndarray): vacuum wavelengths (nm)
+        alb_Jup (ndarray): Jupiter albedo spectrum
     """
     vacuum_lambda_nm, air_lambda_nm, ch4_abs, alb_Jup, \
         alb_Sat, alb_Uranus, alb_Nep, alb_Titan = np.loadtxt(filepath, unpack=True)
@@ -140,6 +133,13 @@ def load_ring_albedo(target_wavelength_nm,
     """
     Load Hedman+2013 ring spectrum and interpolate onto the planet
     wavelength grid.
+
+    Args:
+        target_wavelength_nm (ndarray): planet wavelength grid (nm)
+        filepath (str): path to the ring spectrum file
+
+    Returns:
+        ndarray: ring albedo spectrum on the target wavelength grid
     """
     lambda_rings, if_rings = np.loadtxt(filepath, skiprows=1, dtype=float, 
                                         unpack=True, delimiter=",")
@@ -150,15 +150,11 @@ def load_ring_albedo(target_wavelength_nm,
 def phi_lambert(alpha_deg):
     """ Lambertian phase function normalized to 1 at alpha=0.
     
-    Parameters
-    ----------
-    alpha_deg : float
-        Phase angle in degrees.
+    Args:
+        alpha_deg (float): phase angle in degrees.
     
-    Returns
-    -------
-    float
-        Value of Lambertian phase function at given phase angle.
+    Returns:
+        float: value of Lambertian phase function at given phase angle.
     """
     alpha = np.deg2rad(alpha_deg)
     return (np.sin(alpha) + (np.pi - alpha) * np.cos(alpha)) / np.pi
@@ -167,21 +163,14 @@ def FpFs_planet(Ag_planet, R_planet_AU, a_AU, alpha_deg):
     """
     Calculates planet contrast at phase angle with a Lambertian.
 
-    Parameters
-    ----------
-    Ag_planet : float
-        Geometric albedo of the planet.
-    R_planet_AU : float
-        Radius of the planet in AU.
-    a_AU : float
-        Semi-major axis of the planet's orbit in AU.
-    alpha_deg : float
-        Phase angle in degrees.
+    Args:
+        Ag_planet (float): geometric albedo of the planet.
+        R_planet_AU (float): radius of the planet in AU.
+        a_AU (float): semi-major axis of the planet's orbit in AU.
+        alpha_deg (float): phase angle in degrees.
 
-    Returns
-    -------
-    float
-        Planet flux ratio (Fp/Fs)
+    Returns:
+        float: planet flux ratio (Fp/Fs)
     """
     # Planet brightness (Lambertian)
     phi_planet = phi_lambert(alpha_deg)
@@ -192,19 +181,13 @@ def read_roman_filter_curve(filter_name, filepath="filters/roman/"):
     """
     Read in Roman CGI filter transmission curves from data files
 
-    Parameters
-    ----------
-    filepath : str
-        Path to directory containing filter files
-    filter_name : str
-        Name of filter to read (e.g., '1F', '2F', '3F', '4F')
+    Args:
+        filepath (str): path to directory containing filter files
+        filter_name (str): name of filter to read (e.g., '1F', '2F', '3F', '4F')
     
-    Returns
-    -------
-    wavel : np.array
-        Wavelength array of filter transmission curve
-    transmission : np.array
-        Transmission values of filter curve
+    Returns:
+        wavel (np.array): wavelength array of filter transmission curve
+        transmission (np.array): transmission values of filter curve
     """
     filter_files = [f for f in os.listdir(filepath) if '.csv' in f and filter_name in f]
 
@@ -220,21 +203,14 @@ def FpFs_band(FpFs_spectrum, lambda_planet, filter_transmission, filter_waveleng
     """
     Calculate the band-averaged flux given a spectrum in Fp/Fs and filter transmission
 
-    Parameters
-    ----------
-    FpFs_spectrum : np.array
-        Array of Fp/Fs values from FpFs_planet or other
-    wavelength : np.array
-        Wavelength array corresponding to FpFs_spectrum
-    filter_transmission : np.array
-        Transmission values of the filter
-    filter_wavelengths : np.array
-        Wavelength array corresponding to filter_transmission
+    Args:
+        FpFs_spectrum (np.array): array of Fp/Fs values from FpFs_planet or other
+        wavelength (np.array): wavelength array corresponding to FpFs_spectrum
+        filter_transmission (np.array): transmission values of the filter
+        filter_wavelengths (np.array): wavelength array corresponding to filter_transmission
 
-    Returns
-    -------
-    float
-        Band-averaged Fp/Fs value   
+    Returns:
+        float: band-averaged Fp/Fs value
     """
 
     # Get spectrum only in wavelength regions of filter transmission
@@ -254,18 +230,13 @@ def separation_AU(a, e, f):
     Calculate separation of planet from star at a given epoch from semi-major
     axis, eccentricity, and true anomaly.
 
-    Parameters
-    ----------
-    a : float
-        Semi-major axis in AU
-    e : float
-        Eccentricity
-    f : float
-        True anomaly in radians
+    Args:
+        a (float): semi-major axis in AU
+        e (float): eccentricity
+        f (float): true anomaly in radians
 
-    Returns
-    -------
-    float        Separation in AU
+    Returns:
+        float: separation in AU
     '''
     s = a * (1 - e**2) / (1 + e * np.cos(f))
 
@@ -276,22 +247,28 @@ def phase_angle(I, theta):
     Calculate planet phase angle 
     Assumes observer located in -z direction of reference frame
 
-    Parameters
-    ----------
-    I : float
-        Inclination in rad or with astropy u.deg
-    theta : float
-        Argument of latitude (true anomaly + arg. of periastron)
+    Args:
+        I (float): inclination in rad or with astropy u.deg
+        theta (float): argument of latitude (true anomaly + arg. of periastron)
 
-    Returns
-    -------
-    float
-        Phase angle in radians
+    Returns:
+        float: phase angle in radians
     '''
     return np.arccos( np.sin(I) * np.sin(theta) )
 
 def read_ring_tilt(file_path):
-    """Ring tilt to the line of sight from an illumination file header."""
+    """
+    Ring tilt to the line of sight from an illumination file header.
+
+    Args:
+        file_path (str or Path): illumination file with the ring tilt in its header
+
+    Returns:
+        float: ring tilt to the line of sight (rad)
+
+    Raises:
+        ValueError: if the header has no ring tilt entry.
+    """
     with open(file_path, "r") as f:
         for line in f:
             if not line.startswith("#"):
@@ -306,17 +283,12 @@ def read_illumination_file(file_path, rows_to_skip=14):
     Read ringed_planet_illumination.py output file with headers for phase, true anomaly, 
     and fraction of planet/ring illuminated.
 
-    Parameters
-    ----------
-    file_path : str
-        Full path to file with name "planet_illumination_e{}.txt"
-    rows_to_skip : int
-        Number of header rows to skip in file before data starts (default=13)
+    Args:
+        file_path (str): full path to file with name "planet_illumination_e{}.txt"
+        rows_to_skip (int): number of header rows to skip in file before data starts (default=13)
 
-    Returns
-    -------
-    np.arrays
-        Arrays of phase, true anomaly, and fraction illuminated.
+    Returns:
+        np.arrays: arrays of phase, true anomaly, and fraction illuminated.
 
     """
     phases, true_anomaly, fraction_lit = np.loadtxt(file_path, delimiter=",", skiprows=rows_to_skip, unpack=True)
@@ -327,21 +299,14 @@ def apply_litFraction_to_spectrum(phases, true_anom, lit_fraction, albedo_spectr
     Apply fraction of illumination to a spectrum. 
     lit_fraction is equivalent to a phase function here.
 
-    Parameters
-    ----------
-    phases : np.ndarray
-        Phase angles corresponding to each fraction of illumination in degrees
-    true_anom : np.ndarray
-        True anomalies corresponding to each fraction of illumination in degrees
-    lit_fraction : np.ndarray
-        Fraction of the planet/ring illuminated corresponding to each phase angle
-    albedo_spectrum : np.ndarray 
-        Albedo spectrum of the planet/ring at full phase.
+    Args:
+        phases (np.ndarray): phase angles corresponding to each fraction of illumination in degrees
+        true_anom (np.ndarray): true anomalies corresponding to each fraction of illumination in degrees
+        lit_fraction (np.ndarray): fraction of the planet/ring illuminated corresponding to each phase angle
+        albedo_spectrum (np.ndarray): albedo spectrum of the planet/ring at full phase.
 
-    Returns
-    -------
-    dict
-        Dictionary with phase angles as keys and spectra (albedo_spectrum multiplied by lit_fraction) as values.
+    Returns:
+        dict: dictionary with phase angles as keys and spectra (albedo_spectrum multiplied by lit_fraction) as values.
     """
 
     # Make sure all values in the phase angle array are positive
@@ -367,14 +332,10 @@ def save_spectra_per_phase_to_file(spectra_per_phase_dict, wavelength_arr, filen
     Save spectra as a function of phase angle to output file with matching
     wavelength array.
 
-    Parameters
-    ----------
-    spectra_per_phase_dict : dict
-        Dictionary containing phase angles as keys and spectra as values.
-    wavelength_arr : np.ndarray
-        Array of wavelengths corresponding to the spectra.
-    filename : str
-        Full path to the output file.
+    Args:
+        spectra_per_phase_dict (dict): dictionary containing phase angles as keys and spectra as values.
+        wavelength_arr (np.ndarray): array of wavelengths corresponding to the spectra.
+        filename (str): full path to the output file.
     """
     with open(filename, 'w') as f:
         # Write header row
@@ -397,16 +358,12 @@ def read_spectra_per_phase_file(file_path):
     Read in wavelength array, phase angles, and spectra as a function of phase angle
     from files produced by save_spectra_per_phase_to_file().
 
-    Parameters
-    ----------
-    file_path : str
-        Full path to file containing file name
+    Args:
+        file_path (str): full path to file containing file name
 
-    Returns
-    -------
-    dict
-        Dictionary containing phase angles as keys
-        and spectra as values. 
+    Returns:
+        dict: dictionary containing phase angles as keys
+            and spectra as values.
     """
 
     data = pd.read_csv(file_path)
@@ -422,19 +379,13 @@ def read_stellar_spectrum(file_path, wavel_units=u.Angstrom, spec_units=u.erg/u.
     """
     Reads in stellar spectrum and returns wavelength and flux arrays.
 
-    Parameters
-    ----------
-    file_path : str
-        Full path to file containing wavelength array and spectrum. 
-    wavel_units : astropy.units, optional
-        Units of wavelength in the input file. Default is Angstroms.
+    Args:
+        file_path (str): full path to file containing wavelength array and spectrum.
+        wavel_units (astropy.units, optional): units of wavelength in the input file. Default is Angstroms.
 
-    Returns
-    -------
-    wavelength : np.ndarray
-        Array of wavelengths.
-    flux : np.ndarray
-        Array of flux values corresponding to the wavelengths.
+    Returns:
+        wavelength (np.ndarray): array of wavelengths.
+        flux (np.ndarray): array of flux values corresponding to the wavelengths.
     """
     star_wavel, star_flux = np.loadtxt(file_path, unpack=True)
 
@@ -455,33 +406,21 @@ def calc_flux_in_band(filter_file, albedo_spectrum, wavelength_arr, stellar_spec
     All wavelengths must be in Angstroms.
     TODO: update this to take in only spectrum in units of flux, not albedo space
 
-    Parameters
-    ----------
-    filter_file : str
-        Path to the filter transmission curve file (CSV format).
-    albedo_spectrum : np.ndarray
-        Array of spectral values (e.g., albedo or I/F) corresponding to the wavelength array.
-    wavelength_arr : np.ndarray
-        Array of wavelengths corresponding to the spectrum_arr.
-    stellar_spectrum : np.ndarray
-        Array of the stellar flux values corresponding to the stellar_wavelength array.
-        Should be in units of flux (e.g., W/m2/nm)
-    stellar_wavelength : np.ndarray
-        Array of wavelengths corresponding to the stellar_spectrum.
-    separation : astropy Quantity
-        The distance between the star and the planet (e.g., in AU or km).
-    Rp : astropy Quantity
-        The radius of the planet (e.g., in km).
-    file_skiprows : int, optional
-        Number of rows to skip at the beginning of the filter file (default is 3 for
-        Roman filter files).
+    Args:
+        filter_file (str): path to the filter transmission curve file (CSV format).
+        albedo_spectrum (np.ndarray): array of spectral values (e.g., albedo or I/F) corresponding to the wavelength array.
+        wavelength_arr (np.ndarray): array of wavelengths corresponding to the spectrum_arr.
+        stellar_spectrum (np.ndarray): array of the stellar flux values corresponding to the stellar_wavelength array.
+            Should be in units of flux (e.g., W/m2/nm)
+        stellar_wavelength (np.ndarray): array of wavelengths corresponding to the stellar_spectrum.
+        separation (astropy Quantity): the distance between the star and the planet (e.g., in AU or km).
+        Rp (astropy Quantity): the radius of the planet (e.g., in km).
+        file_skiprows (int, optional): number of rows to skip at the beginning of the filter file (default is 3 for
+            Roman filter files).
 
-    Returns
-    -------
-    F_band : float
-        The band-averaged flux of the spectrum through the filter.
-    fpfs: np.ndarray
-        The planet-to-star flux ratio spectrum (Fp/Fs) across the input wavelength array.
+    Returns:
+        F_band (float): the band-averaged flux of the spectrum through the filter.
+        fpfs (np.ndarray): the planet-to-star flux ratio spectrum (Fp/Fs) across the input wavelength array.
 
     """    
     df_band = pd.read_csv(filter_file, skiprows=file_skiprows, sep=',')
@@ -528,31 +467,20 @@ def flux_in_band_from_fluxSpec(filter_file, flux_spectrum, wavelength_arr, stell
     Calculate flux within a Roman bandpass given the target's spectrum in flux units (erg/s/cm2/A)
     and the stellar flux spectrum.
 
-    Parameters
-    ----------
-    filter_file : str
-        Full path to Roman filter file for either bands 1-4
-    flux_spectrum : np.ndarray
-        Flux spectrum of the target in units of erg/s/cm2/A
-    wavelength_arr : np.ndarray
-        Array of wavelengths corresponding to the flux_spectrum.
-    stellar_spectrum : np.ndarray
-        Array of the stellar flux values corresponding to the stellar_wavelength array.
-        Units of erg/s/cm2/A
-    stellar_wavelength : np.ndarray
-        Array of wavelengths corresponding to the stellar_spectrum.
-    separation : astropy.units.Quantity
-        Distance between the target and the star in units of AU.
-    file_skiprows : int, optional
-        Number of rows to skip at the beginning of the filter file (default is 3 for
-        Roman filter files).
+    Args:
+        filter_file (str): full path to Roman filter file for either bands 1-4
+        flux_spectrum (np.ndarray): flux spectrum of the target in units of erg/s/cm2/A
+        wavelength_arr (np.ndarray): array of wavelengths corresponding to the flux_spectrum.
+        stellar_spectrum (np.ndarray): array of the stellar flux values corresponding to the stellar_wavelength array.
+            Units of erg/s/cm2/A
+        stellar_wavelength (np.ndarray): array of wavelengths corresponding to the stellar_spectrum.
+        separation (astropy.units.Quantity): distance between the target and the star in units of AU.
+        file_skiprows (int, optional): number of rows to skip at the beginning of the filter file (default is 3 for
+            Roman filter files).
 
-    Returns
-    -------
-    F_band : float
-        The band-averaged flux of the spectrum through the filter.
-    fpfs: np.ndarray
-        The planet-to-star flux ratio spectrum (Fp/Fs) in the bandpass of interest.
+    Returns:
+        F_band (float): the band-averaged flux of the spectrum through the filter.
+        fpfs (np.ndarray): the planet-to-star flux ratio spectrum (Fp/Fs) in the bandpass of interest.
 
     """
 
@@ -593,22 +521,15 @@ def calc_albedo_in_band(filter_file, albedo_spectrum, wavelength_arr, file_skipr
     """
     Calculate albedo in Roman filter of interest. 
 
-    Parameters
-    ----------
-    filter_file : str
-        Full path to Roman filter file for either band 1-4
-    albedo_spectrum : np.ndarray
-        Albedo spectrum of object
-    wavelength_arr : np.ndarray
-        Array of wavelengths corresponding to the albedo_spectrum.
-    file_skiprows : int, optional
-        Number of rows to skip at the beginning of the filter file (default is 3 for
-        Roman filter files).
+    Args:
+        filter_file (str): full path to Roman filter file for either band 1-4
+        albedo_spectrum (np.ndarray): albedo spectrum of object
+        wavelength_arr (np.ndarray): array of wavelengths corresponding to the albedo_spectrum.
+        file_skiprows (int, optional): number of rows to skip at the beginning of the filter file (default is 3 for
+            Roman filter files).
 
-    Returns
-    -------
-    A_band : float
-        Band-averaged albedo of the object in the filter of interest.
+    Returns:
+        A_band (float): band-averaged albedo of the object in the filter of interest.
     """
 
     df_band = pd.read_csv(filter_file, skiprows=file_skiprows, sep=',')
@@ -635,24 +556,18 @@ def convert_planet_albedo_to_flux(albedo_spectrum, albedo_wavel, stellar_spectru
     """
     Convert planet albedo spectrum to flux space.
 
-    Parameters
-    ----------
-    albedo_spectrum : np.ndarray
-        Albedo spectrum of the planet. 
-    albedo_wavel : np.ndarray
-        Wavelength array corresponding to albedo_spectrum.
-    stellar_spectrum : np.ndarray
-        Spectrum of host star in flux units (e.g., W/m2/nm) corresponding to stellar_wavel
-    stellar_wavel : np.ndarray
-        Wavelength array corresponding to stellar_spectrum.
-    separation : astropy.units.Quantity
-        Distance between the planet and the star.
-    Rp : astropy.units.Quantity
-        Radius of the planet in km
-    Returns
-    -------
-    target_flux : np.ndarray
-        Flux spectrum of the planet in the same units as the stellar_spectrum.
+    Args:
+        albedo_spectrum (np.ndarray): albedo spectrum of the planet.
+        albedo_wavel (np.ndarray): wavelength array corresponding to albedo_spectrum.
+        stellar_spectrum (np.ndarray): spectrum of host star in flux units (e.g., W/m2/nm) corresponding to stellar_wavel
+        stellar_wavel (np.ndarray): wavelength array corresponding to stellar_spectrum.
+        separation (astropy.units.Quantity): distance between the planet and the star.
+        Rp (astropy.units.Quantity): radius of the planet in km
+
+    Returns:
+        target_flux (np.ndarray): flux spectrum of the planet in the same units as the stellar_spectrum.
+        FpFs (np.ndarray): planet-to-star flux ratio spectrum
+        stellar_flux_at_planet (np.ndarray): stellar flux at the planet's location
     """
     # Scale stellar spectrum for distance of planet from star
     separation_km = separation.to(u.km) # units of km
@@ -673,26 +588,19 @@ def convert_planet_albedo_to_flux_wRingShadowing(albedo_spectrum, albedo_wavel, 
     """
     Convert planet albedo spectrum to flux space.
 
-    Parameters
-    ----------
-    albedo_spectrum : np.ndarray
-        Albedo spectrum of the planet. 
-    albedo_wavel : np.ndarray
-        Wavelength array corresponding to albedo_spectrum.
-    frac_planet_illuminated : np.ndarray
-        Fraction of the planet illuminated at each phase angle w.r.t. observer, accounting for ring shadowing.
-    stellar_spectrum : np.ndarray
-        Spectrum of host star in flux units (e.g., W/m2/nm) corresponding to stellar_wavel
-    stellar_wavel : np.ndarray
-        Wavelength array corresponding to stellar_spectrum.
-    separation : astropy.units.Quantity
-        Distance between the planet and the star.
-    Rp : astropy.units.Quantity
-        Radius of the planet in km
-    Returns
-    -------
-    target_flux : np.ndarray
-        Flux spectrum of the planet in the same units as the stellar_spectrum.
+    Args:
+        albedo_spectrum (np.ndarray): albedo spectrum of the planet.
+        albedo_wavel (np.ndarray): wavelength array corresponding to albedo_spectrum.
+        frac_planet_illuminated (np.ndarray): fraction of the planet illuminated at each phase angle w.r.t. observer, accounting for ring shadowing.
+        stellar_spectrum (np.ndarray): spectrum of host star in flux units (e.g., W/m2/nm) corresponding to stellar_wavel
+        stellar_wavel (np.ndarray): wavelength array corresponding to stellar_spectrum.
+        separation (astropy.units.Quantity): distance between the planet and the star.
+        Rp (astropy.units.Quantity): radius of the planet in km
+
+    Returns:
+        target_flux (np.ndarray): flux spectrum of the planet in the same units as the stellar_spectrum.
+        FpFs (np.ndarray): planet-to-star flux ratio spectrum
+        stellar_flux_at_planet (np.ndarray): stellar flux at the planet's location
     """
     # Scale stellar spectrum for distance of planet from star
     separation_km = separation.to(u.km) # units of km
@@ -713,24 +621,15 @@ def convert_ring_albedo_to_flux(albedo_spectrum, albedo_wavel, stellar_spectrum,
     """
     Convert ring albedo spectrum (I/F) to flux space.
 
-    Parameters
-    ----------
-    albedo_spectrum : np.ndarray
-        Albedo spectrum of the rings.
-    albedo_wavel : np.ndarray
-        Wavelength array corresponding to albedo_spectrum.
-    stellar_spectrum : np.ndarray
-        Spectrum of host star in flux units (e.g., W/m2/nm) corresponding to stellar_wavel
-    stellar_wavel : np.ndarray
-        Wavelength array corresponding to stellar_spectrum.
-    separation : astropy.units.Quantity
-        Distance between the planet and the star in km
-    R_inner : astropy.units.Quantity
-        Inner radius of the ring in km
-    R_outer : astropy.units.Quantity
-        Outer radius of the ring in km
-    ringinc_rad : astropy.units.Quantity
-        Angle between the ring normal and the line of sight in radians (0 = face-on)
+    Args:
+        albedo_spectrum (np.ndarray): albedo spectrum of the rings.
+        albedo_wavel (np.ndarray): wavelength array corresponding to albedo_spectrum.
+        stellar_spectrum (np.ndarray): spectrum of host star in flux units (e.g., W/m2/nm) corresponding to stellar_wavel
+        stellar_wavel (np.ndarray): wavelength array corresponding to stellar_spectrum.
+        separation (astropy.units.Quantity): distance between the planet and the star in km
+        R_inner (astropy.units.Quantity): inner radius of the ring in km
+        R_outer (astropy.units.Quantity): outer radius of the ring in km
+        ringinc_rad (astropy.units.Quantity): angle between the ring normal and the line of sight in radians (0 = face-on)
 
     Returns
     -------
@@ -758,25 +657,17 @@ def convert_flux_to_albedo(flux_spectrum, flux_wavel, stellar_spectrum,
     Convert the flux spectrum in units of erg/s/cm^2/Angstrom to the albedo spectrum
     as a function of phase angle.
 
-    Parameters
-    ----------
-    flux_spectrum : np.ndarray
-        Flux spectrum of the target in units of erg/s/cm^2/Angstrom.
-    flux_wavel : np.ndarray
-        Wavelength array corresponding to flux_spectrum.
-    stellar_spectrum : np.ndarray
-        Spectrum of the host star in units of erg/s/cm^2/Angstrom.
-    stellar_wavel : np.ndarray
-        Wavelength array corresponding to stellar_spectrum.
-    separation : astropy.units.Quantity
-        Distance between the planet and the star in km.
-    R_system : astropy.units.Quantity
-        Radius of the planetary system in km.
+    Args:
+        flux_spectrum (np.ndarray): flux spectrum of the target in units of erg/s/cm^2/Angstrom.
+        flux_wavel (np.ndarray): wavelength array corresponding to flux_spectrum.
+        stellar_spectrum (np.ndarray): spectrum of the host star in units of erg/s/cm^2/Angstrom.
+        stellar_wavel (np.ndarray): wavelength array corresponding to stellar_spectrum.
+        separation (astropy.units.Quantity): distance between the planet and the star in km.
+        R_system (astropy.units.Quantity): radius of the planetary system in km.
 
-    Returns
-    -------
-    albedo_spectrum : np.ndarray
-        Albedo spectrum of the target as a function of phase angle.
+    Returns:
+        albedo_spectrum (np.ndarray): albedo spectrum of the target as a function of phase angle.
+        FpFs (np.ndarray): planet-to-star flux ratio spectrum
     """
     
     # Scale stellar spectrum for distance of planet from star
@@ -800,10 +691,13 @@ def sort_trueanom_flux(df):
     Sort a dataframe of true anomaly and flux ratio values 
     by true anomaly. Usually used for plotting purposes.
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        dataframe generated from a combined phase curve file.
+    Args:
+        df (pandas.DataFrame): dataframe generated from a combined phase curve file.
+
+    Returns:
+        true_anom_sorted (Series): true anomalies sorted in increasing order
+        fpfs_sorted (Series): flux ratios in the same order
+        sorted_ids (ndarray): indices that sort the dataframe by true anomaly
     """
     sorted_ids = np.argsort(df["true_anomaly"])
     true_anom_sorted = df["true_anomaly"][sorted_ids]
